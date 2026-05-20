@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculateur de Moyenne Universitaire</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f6f9; color: #333; margin: 0; padding: 20px; }
+        .container { max-width: 1000px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        h1, h2 { color: #2c3e50; border-bottom: 2px solid #ecf0f1; padding-bottom: 10px; }
+        .section { margin-bottom: 30px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 15px; }
+        .card { background: #fafafa; border: 1px solid #e0e0e0; padding: 15px; border-radius: 8px; }
+        .card h4 { margin: 0 0 10px 0; color: #34495e; }
+        label { display: block; font-size: 12px; font-weight: bold; margin-top: 5px; color: #7f8c8d; }
+        input { width: 100%; padding: 6px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; margin-top: 2px; }
+        button { background-color: #27ae60; color: white; padding: 12px 25px; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; width: 100%; transition: background 0.3s; }
+        button:hover { background-color: #219653; }
+        .results { margin-top: 30px; padding: 20px; background: #e8f8f5; border-left: 5px solid #2cc990; border-radius: 4px; }
+        .results p { margin: 8px 0; font-size: 15px; }
+        .final-grade { font-size: 22px; font-weight: bold; color: #27ae60; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Calculateur de Moyenne Universitaire</h1>
+    
+    <!-- SEMESTRE 1 NON-ANNUEL -->
+    <div class="section">
+        <h2>Semestre 1 (Matières Non-Annuelles)</h2>
+        <div class="grid" id="s1-container">
+            <!-- Injecté par JS -->
+        </div>
+    </div>
+
+    <!-- SEMESTRE 2 NON-ANNUEL -->
+    <div class="section">
+        <h2>Semestre 2 (Matières Non-Annuelles)</h2>
+        <div class="grid" id="s2-container">
+            <!-- Injecté par JS -->
+        </div>
+    </div>
+
+    <!-- MATIERES ANNUELLES -->
+    <div class="section">
+        <h2>Matières Annuelles (S1 + S2)</h2>
+        <div class="grid" id="annuel-container">
+            <!-- Injecté par JS -->
+        </div>
+    </div>
+
+    <button onclick="calculerMoyenne()">Calculer la Moyenne Générale</button>
+
+    <!-- RESULTATS -->
+    <div class="results" id="results-box" style="display:none;">
+        <h2>Résultats Détaillés</h2>
+        <div id="details-moyennes"></div>
+        <hr>
+        <p class="final-grade" id="txt-finale"></p>
+    </div>
+</div>
+
+<script>
+// Structure des données du template
+const matieresS1 = [
+    { id: 'chimie', name: 'Chimie', coeff: 2, tp: true },
+    { id: 'histologie', name: 'Histologie', coeff: 2, tp: true },
+    { id: 'zoologie', name: 'Zoologie', coeff: 2, tp: true },
+    { id: 'ethnologie', name: 'Ethnologie', coeff: 2, tp: true },
+    { id: 'genetique', name: 'Génétique', coeff: 2, tp: true }
+];
+
+const matieresS2 = [
+    { id: 'biophysique', name: 'Biophysique', coeff: 2, tp: false },
+    { id: 'biomolecule', name: 'Biomolécule', coeff: 2, tp: true },
+    { id: 'embryo', name: 'Embryologie', coeff: 2, tp: true },
+    { id: 'ethologie', name: 'Ethologie', coeff: 2, tp: true },
+    { id: 'physio', name: 'Physiologie', coeff: 3, tp: false }
+];
+
+const matieresAnnuelles = [
+    { id: 'anatomie', name: 'Anatomie', coeff: 3, tpS1: true, tpS2: true },
+    { id: 'biochimie', name: 'Biochimie', coeff: 3, tpS1: true, tpS2: true },
+    { id: 'cytologie', name: 'Cytologie', coeff: 3, tpS1: false, tpS2: false },
+    { id: 'langue', name: 'Langue étrangère', coeff: 1, tpS1: false, tpS2: false }
+];
+
+// Génération de l'interface graphique au chargement
+function init() {
+    const s1Div = document.getElementById('s1-container');
+    matieresS1.forEach(m => s1Div.appendChild(createCard(m)));
+
+    const s2Div = document.getElementById('s2-container');
+    matieresS2.forEach(m => s2Div.appendChild(createCard(m)));
+
+    const annuelDiv = document.getElementById('annuel-container');
+    matieresAnnuelles.forEach(m => annuelDiv.appendChild(createCardAnnuelle(m)));
+}
+
+function createCard(m) {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `<h4>${m.name} (Coeff ${m.coeff})</h4>
+        <label>Exam</label><input type="number" step="0.01" id="${m.id}-exam" value="10">
+        <label>TD</label><input type="number" step="0.01" id="${m.id}-td" value="10">
+        ${m.tp ? `<label>TP</label><input type="number" step="0.01" id="${m.id}-tp" value="10">` : ''}`;
+    return card;
+}
+
+function createCardAnnuelle(m) {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `<h4>${m.name} (Coeff ${m.coeff})</h4>
+        <strong>Semestre 1:</strong>
+        <label>Exam S1</label><input type="number" step="0.01" id="${m.id}-exam1" value="10">
+        <label>TD S1</label><input type="number" step="0.01" id="${m.id}-td1" value="10">
+        ${m.tpS1 ? `<label>TP S1</label><input type="number" step="0.01" id="${m.id}-tp1" value="10">` : ''}
+        <strong style="display:block; margin-top:10px;">Semestre 2:</strong>
+        <label>Exam S2</label><input type="number" step="0.01" id="${m.id}-exam2" value="10">
+        <label>TD S2</label><input type="number" step="0.01" id="${m.id}-td2" value="10">
+        ${m.tpS2 ? `<label>TP S2</label><input type="number" step="0.01" id="${m.id}-tp2" value="10">` : ''}`;
+    return card;
+}
+
+function calcMatiere(exam, td, tp, hasTp) {
+    if (hasTp) {
+        return (exam * 0.6) + (td * 0.2) + (tp * 0.2);
+    } else {
+        return (exam * 0.7) + (td * 0.3);
+    }
+}
+
+function calculerMoyenne() {
+    let htmlDetails = "<h3>Matières un Semestre :</h3>";
+    
+    // 1. Calcul S1 Non-Annuel
+    let prodS1 = 0;
+    matieresS1.forEach(m => {
+        let ex = parseFloat(document.getElementById(`${m.id}-exam`).value) || 0;
+        let td = parseFloat(document.getElementById(`${m.id}-td`).value) || 0;
+        let tp = m.tp ? (parseFloat(document.getElementById(`${m.id}-tp`).value) || 0) : 0;
+        let moy = calcMatiere(ex, td, tp, m.tp);
+        prodS1 += (moy * m.coeff);
+        htmlDetails += `<p>${m.name} : <strong>${moy.toFixed(3)}</strong></p>`;
+    });
+    let moyS1Indicative = prodS1 / 20;
+
+    // 2. Calcul S2 Non-Annuel
+    let prodS2 = 0;
+    htmlDetails += "<h3>Matières S2 Non-Annuelles :</h3>";
+    matieresS2.forEach(m => {
+        let ex = parseFloat(document.getElementById(`${m.id}-exam`).value) || 0;
+        let td = parseFloat(document.getElementById(`${m.id}-td`).value) || 0;
+        let tp = m.tp ? (parseFloat(document.getElementById(`${m.id}-tp`).value) || 0) : 0;
+        let moy = calcMatiere(ex, td, tp, m.tp);
+        prodS2 += (moy * m.coeff);
+        htmlDetails += `<p>${m.name} : <strong>${moy.toFixed(3)}</strong></p>`;
+    });
+    let moyS2Indicative = prodS2 / 21;
+
+    // 3. Calcul Matières Annuelles
+    let prodAnnuelles = 0;
+    htmlDetails += "<h3>Matières Annuelles (Moyennes Annuelles) :</h3>";
+    matieresAnnuelles.forEach(m => {
+        let ex1 = parseFloat(document.getElementById(`${m.id}-exam1`).value) || 0;
+        let td1 = parseFloat(document.getElementById(`${m.id}-td1`).value) || 0;
+        let tp1 = m.tpS1 ? (parseFloat(document.getElementById(`${m.id}-tp1`).value) || 0) : 0;
+        let moyS1 = calcMatiere(ex1, td1, tp1, m.tpS1);
+
+        let ex2 = parseFloat(document.getElementById(`${m.id}-exam2`).value) || 0;
+        let td2 = parseFloat(document.getElementById(`${m.id}-td2`).value) || 0;
+        let tp2 = m.tpS2 ? (parseFloat(document.getElementById(`${m.id}-tp2`).value) || 0) : 0;
+        let moyS2 = calcMatiere(ex2, td2, tp2, m.tpS2);
+
+        let moyAnnuelle = (moyS1 + moyS2) / 2;
+        prodAnnuelles += (moyAnnuelle * m.coeff);
+        
+        htmlDetails += `<p>${m.name} (S1: ${moyS1.toFixed(2)} | S2: ${moyS2.toFixed(2)}) : <strong>Annuels: ${moyAnnuelle.toFixed(3)}</strong></p>`;
+    });
+
+    // 4. Calcul Moyenne Générale Finale
+    let totalCoeff = 10 + 10 + 11; // Annuelles(10) + S1(10) + S2(11)
+    let totalProduits = prodAnnuelles + prodS1 + prodS2;
+    let moyenneGeneraleFinale = totalProduits / totalCoeff;
+
+    // Affichage des résultats
+    document.getElementById('details-moyennes').innerHTML = `
+        <p>Moyenne Semestrielle S1 (Indicative) : <strong>${moyS1Indicative.toFixed(3)} / 20</strong></p>
+        <p>Moyenne Semestrielle S2 (Indicative) : <strong>${moyS2Indicative.toFixed(3)} / 20</strong></p>
+        ${htmlDetails}
+    `;
+    
+    document.getElementById('txt-finale').innerText = `Moyenne Générale Finale : ${moyenneGeneraleFinale.toFixed(3)} / 20`;
+    document.getElementById('results-box').style.display = 'block';
+    window.scrollTo(0, document.body.scrollHeight);
+}
+
+window.onload = init;
+</script>
+</body>
+</html>
